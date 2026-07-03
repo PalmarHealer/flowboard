@@ -33,6 +33,11 @@ board. So do **not** use a `src` tag here. Instead:
 2. **Paste the returned code verbatim** inside an inline `<script> … </script>` in the artifact.
 3. Add your own `<script>` that calls `new FlowBoard(...)` after it.
 
+Fetch it **verbatim** — the file must be inlined byte-for-byte or it breaks. If you fetch the raw
+bytes to disk (e.g. `curl -sL <url> -o flowboard.auto.js` then read the file), do it in the build
+**sandbox's temp/scratch area**, not the user's project directory, and don't leave the download
+behind. Do not hand-edit or trim the bundle.
+
 ```html
 <div id="app" style="position:fixed; inset:0"></div>
 <script>
@@ -81,6 +86,39 @@ board.fit();   // frame everything
 
 **Edge** `{ from, to, dir('h'|'v'|auto), arrow, style('solid'|'dashed'|'dotted'), width, color, label }`.
 Omit `dir` to let sides be chosen automatically.
+
+## Layout — YOU position the cards; there is no auto-arrange
+
+FlowBoard places every card exactly at the `x`/`y` you give it and does **not** lay things out for
+you. If you pack coordinates too tightly the cards **overlap** and it looks broken. Space them
+generously:
+
+- Default card width is **280 px** and height **grows with the body text** (a card with a few lines
+  is ~90–140 px tall). Plan positions around that.
+- **Columns:** step `x` by **≥ 340 px** (≥ `width + 60`). Never let two cards be closer than
+  `width + ~60` horizontally.
+- **Rows:** step `y` by **≥ 170 px** for short cards, **more** when cards carry several lines — leave
+  a real vertical gap (~60 px of empty space between cards).
+- Arrange by structure: a left→right flow = one column per stage; a tree = spread siblings down a
+  column and fan out to the next column; a hub = center node with children ringed well clear of it.
+- Long text? widen that card via `width` and add extra horizontal room around it.
+- **Always call `board.fit()`** after `setNodes`/`setEdges` so the whole thing is framed.
+- When unsure, use **more** space, not less — panning/zooming is free; overlap is not.
+
+Simple, reliable pattern — lay cards on a coarse grid, then fit:
+
+```js
+const COL = 360, ROW = 190;              // generous steps
+const at = (c, r) => ({ x: 60 + c * COL, y: 60 + r * ROW });
+board.setNodes([
+  { id: 'a', ...at(0, 0), title: 'Internet' },
+  { id: 'b', ...at(1, 0), title: 'Gateway' },
+  { id: 'c', ...at(1, 1), title: 'App server' },
+  { id: 'd', ...at(2, 1), title: 'Database' }
+]);
+board.setEdges([{ from:'a', to:'b' }, { from:'b', to:'c' }, { from:'c', to:'d' }]);
+board.fit();
+```
 
 ## 3. Common setups
 
