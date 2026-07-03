@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="de">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -23,13 +23,16 @@
   .demo-actions button:hover { border-color: #2f6fd6; color: #2f6fd6; }
   .demo-actions button .fb-i { width: 15px; height: 15px; }
   .demo-actions #status { font-family: ui-monospace, monospace; font-size: 11px; color: #5a6675; }
-  :root[data-theme="dark"] .demo-actions,
-  @media (prefers-color-scheme: dark) { :root:not([data-theme]) .demo-actions { background: rgba(20,27,37,.92); border-color: #2a3547; } }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme]) .demo-actions { background: rgba(20,27,37,.92); border-color: #2a3547; }
+    :root:not([data-theme]) .demo-actions strong { color: #e7edf5; }
+    :root:not([data-theme]) .demo-actions button { background: #1a222e; border-color: #2a3547; color: #dbe3ee; }
+    :root:not([data-theme]) .demo-actions #status { color: #93a1b3; }
+  }
   :root[data-theme="dark"] .demo-actions { background: rgba(20,27,37,.92); border-color: #2a3547; }
   :root[data-theme="dark"] .demo-actions strong { color: #e7edf5; }
   :root[data-theme="dark"] .demo-actions button { background: #1a222e; border-color: #2a3547; color: #dbe3ee; }
   :root[data-theme="dark"] .demo-actions #status { color: #93a1b3; }
-  .fb-node.phase-hidden .fb-node__tag { color: var(--fb-warn); background: var(--fb-warn-soft); border-color: var(--fb-warn-line); }
 </style>
 </head>
 <body>
@@ -40,7 +43,7 @@
   <button id="ro" type="button"></button>
   <button id="save" type="button"></button>
   <a href="https://github.com/PalmarHealer/flowboard" target="_blank" rel="noopener">GitHub ↗</a>
-  <span id="status">bereit</span>
+  <span id="status">ready</span>
 </div>
 
 <!-- one script loads everything (CSS is auto-injected) -->
@@ -48,19 +51,22 @@
 <script>
 (function () {
   var CDN = 'https://cdn.jsdelivr.net/gh/PalmarHealer/flowboard@v1.0.0/dist/flowboard.auto.js';
-  function notice(t) { return '<div style="font-size:12.5px;color:var(--fb-muted);background:var(--fb-surface-2);border-radius:8px;padding:8px 10px;margin-bottom:9px">Team merkt: ' + t + '</div>'; }
-  function safety(rows) { return '<div style="display:flex;flex-direction:column;gap:7px;font-size:12.5px">' + rows.map(function (r) { return '<div style="display:flex;gap:8px"><span style="font-family:var(--fb-mono);color:var(--fb-safe);font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;font-weight:600;min-width:72px">' + r[0] + '</span><span>' + r[1] + '</span></div>'; }).join('') + '</div>'; }
-  var m = '<b style="font-family:var(--fb-mono);color:var(--fb-safe)">';
 
   var nodes = [
-    { id: 'banner', x: 40, y: 30, width: 520, variant: 'banner', tag: 'FlowBoard', title: 'Ein Whiteboard in reinem Vanilla-JS', body: '<p style="margin:0;color:var(--fb-muted);font-size:13px">Karten verschieben, verbinden, bearbeiten. Pan/Zoom, Undo/Redo, Snap, Themes.</p>' },
-    { id: 'a', x: 60, y: 300, width: 250, variant: 'accent', tag: 'Schritt 1', title: 'Karte anklicken', body: 'Klick öffnet den <b>Rich-Text-Editor</b> (B/I/U, Listen, Überschrift).' },
-    { id: 'b', x: 400, y: 300, width: 250, variant: 'accent', tag: 'Schritt 2', title: 'Verbinden', body: 'Port am Rand ziehen → auf eine Karte oder ins Leere loslassen.' },
-    { id: 'c', x: 740, y: 300, width: 250, variant: 'safe', title: 'Anpassen', body: 'Karte/Verbindung wählen → Inspector (oben rechts): Farben (Hex-Picker), Rahmen, Dicke, Stil.' },
-    { id: 'd', x: 400, y: 540, width: 250, variant: 'muted', title: 'Shift + Ziehen', body: 'zieht einen Auswahlrahmen für Mehrfach-Bearbeitung auf.' }
+    { id: 'banner', x: 40, y: 30, width: 520, variant: 'banner', tag: 'FlowBoard',
+      title: 'A whiteboard in pure vanilla JS',
+      body: '<p style="margin:0;color:var(--fb-muted);font-size:13px">Move, connect and edit cards. Pan/zoom, undo/redo, snap, themes — no dependencies.</p>' },
+    { id: 'a', x: 60, y: 300, width: 250, variant: 'accent', tag: 'Step 1', title: 'Click a card',
+      body: 'A click opens the <b>rich-text editor</b> (bold / italic / lists / heading).' },
+    { id: 'b', x: 400, y: 300, width: 250, variant: 'accent', tag: 'Step 2', title: 'Connect',
+      body: 'Drag a port on the edge → drop on a card, or on empty space to spawn a linked card.' },
+    { id: 'c', x: 740, y: 300, width: 250, variant: 'safe', title: 'Restyle',
+      body: 'Select a card or connection → the inspector (top-right): colors (hex picker), border, width, style.' },
+    { id: 'd', x: 400, y: 540, width: 250, variant: 'muted', title: 'Shift + drag',
+      body: 'draws a marquee to select several cards and edit them together.' }
   ];
   var edges = [
-    { from: 'a', to: 'b', dir: 'h', arrow: true, label: 'dann' },
+    { from: 'a', to: 'b', dir: 'h', arrow: true, label: 'then' },
     { from: 'b', to: 'c', dir: 'h', arrow: true },
     { from: 'b', to: 'd', dir: 'v', arrow: true, style: 'dashed' }
   ];
@@ -73,14 +79,14 @@
   syncTheme(board.getTheme()); board.on('theme', syncTheme);
   function status(t) { document.getElementById('status').textContent = t; }
 
-  document.getElementById('add').innerHTML = ic('plus') + '<span>Karte</span>';
-  document.getElementById('save').innerHTML = ic('device-floppy') + '<span>Speichern</span>';
+  document.getElementById('add').innerHTML = ic('plus') + '<span>Card</span>';
+  document.getElementById('save').innerHTML = ic('device-floppy') + '<span>Save</span>';
   var ro = true, roBtn = document.getElementById('ro');
-  function roLabel() { roBtn.innerHTML = (ro ? ic('pencil') : ic('eye')) + '<span>' + (ro ? 'Editierbar' : 'Read-only') + '</span>'; }
+  function roLabel() { roBtn.innerHTML = (ro ? ic('pencil') : ic('eye')) + '<span>' + (ro ? 'Edit' : 'Read-only') + '</span>'; }
   roLabel();
 
-  document.getElementById('add').addEventListener('click', function () { var n = board.addNode({ x: 120 + Math.round(Math.random() * 120), y: 560 + Math.round(Math.random() * 60), width: 220, title: 'Neue Karte', body: '' }); status('hinzugefügt: ' + n.id); });
-  roBtn.addEventListener('click', function () { ro = !ro; board.setReadOnly(ro); roLabel(); status(ro ? 'Read-only (Präsentation)' : 'editierbar'); });
+  document.getElementById('add').addEventListener('click', function () { var n = board.addNode({ x: 120 + Math.round(Math.random() * 120), y: 560 + Math.round(Math.random() * 60), width: 220, title: 'New card', body: '' }); status('added: ' + n.id); });
+  roBtn.addEventListener('click', function () { ro = !ro; board.setReadOnly(ro); roLabel(); status(ro ? 'read-only (presentation)' : 'editable'); });
   document.getElementById('save').addEventListener('click', function () {
     var data = JSON.stringify(board.toJSON());
     var html = '<!doctype html>\n<meta charset="utf-8">\n<title>FlowBoard</title>\n' +
@@ -88,7 +94,7 @@
       '<script src="' + CDN + '"><\/script>\n' +
       '<script>new FlowBoard("#app",{readOnly:true,theme:"' + board.getTheme() + '"}).fromJSON(' + data + ');<\/script>\n';
     var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([html], { type: 'text/html' })); a.download = 'flowboard.html'; a.click();
-    setTimeout(function () { URL.revokeObjectURL(a.href); }, 1000); status('als flowboard.html gespeichert');
+    setTimeout(function () { URL.revokeObjectURL(a.href); }, 1000); status('saved as flowboard.html');
   });
 })();
 </script>
