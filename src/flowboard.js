@@ -13,7 +13,7 @@
   'use strict';
 
   var SVGNS = 'http://www.w3.org/2000/svg';
-  var CDN = 'https://cdn.jsdelivr.net/gh/PalmarHealer/flowboard@v1.0.0/dist/flowboard.auto.js';
+  var CDN = 'https://cdn.jsdelivr.net/gh/PalmarHealer/flowboard@v1.1.0/dist/flowboard.auto.js';
   function el(tag, cls, parent) { var d = document.createElement(tag); if (cls) d.className = cls; if (parent) parent.appendChild(d); return d; }
   function svg(tag, parent) { var e = document.createElementNS(SVGNS, tag); if (parent) parent.appendChild(e); return e; }
   function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }

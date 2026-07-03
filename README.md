@@ -34,7 +34,7 @@ Add a single script — the stylesheet is injected automatically:
 ```html
 <div id="app" style="position:fixed; inset:0"></div>
 
-<script src="https://cdn.jsdelivr.net/gh/PalmarHealer/flowboard@v1.0.0/dist/flowboard.auto.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/PalmarHealer/flowboard@v1.1.0/dist/flowboard.auto.js"></script>
 <script>
   const board = new FlowBoard('#app', { theme: 'auto', minimap: true });
   board.setNodes([
@@ -47,13 +47,13 @@ Add a single script — the stylesheet is injected automatically:
 ```
 
 > The container needs a real size (e.g. `position:fixed; inset:0`, or any element with width & height).
-> Pin a version (`@v1.0.0`) for stability, or use `@1` to follow the latest v1 release.
+> Pin a version (`@v1.1.0`) for stability, or use `@1` to follow the latest v1 release.
 
 ### Alternative: load the two files separately
 
 ```html
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/PalmarHealer/flowboard@v1.0.0/dist/flowboard.css">
-<script src="https://cdn.jsdelivr.net/gh/PalmarHealer/flowboard@v1.0.0/dist/flowboard.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/PalmarHealer/flowboard@v1.1.0/dist/flowboard.css">
+<script src="https://cdn.jsdelivr.net/gh/PalmarHealer/flowboard@v1.1.0/dist/flowboard.js"></script>
 ```
 
 ---

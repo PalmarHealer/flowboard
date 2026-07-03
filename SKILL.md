@@ -27,9 +27,9 @@ A Claude Artifact's CSP **blocks external scripts**. A `<script src="…cdn…">
 and your `new FlowBoard(...)` call throws **`ReferenceError: FlowBoard is not defined`** with a blank
 board. So do **not** use a `src` tag here. Instead:
 
-1. **Fetch the bundle's text** yourself (via WebFetch), trying these URLs in order until one returns JS:
-   - `https://cdn.jsdelivr.net/gh/PalmarHealer/flowboard@v1.0.0/dist/flowboard.auto.js`
-   - `https://raw.githubusercontent.com/PalmarHealer/flowboard/v1.0.0/dist/flowboard.auto.js`
+1. **Fetch the bundle's text** yourself, trying these URLs in order until one returns JS (raw first = freshest):
+   - `https://raw.githubusercontent.com/PalmarHealer/flowboard/main/dist/flowboard.auto.js`
+   - `https://cdn.jsdelivr.net/gh/PalmarHealer/flowboard@latest/dist/flowboard.auto.js`
 2. **Paste the returned code verbatim** inside an inline `<script> … </script>` in the artifact.
 3. Add your own `<script>` that calls `new FlowBoard(...)` after it.
 
@@ -55,7 +55,7 @@ External scripts are allowed here, so one tag is enough (CSS is auto-injected):
 
 ```html
 <div id="app" style="position:fixed; inset:0"></div>
-<script src="https://cdn.jsdelivr.net/gh/PalmarHealer/flowboard@v1.0.0/dist/flowboard.auto.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/PalmarHealer/flowboard@v1.1.0/dist/flowboard.auto.js"></script>
 ```
 
 > The container **must have a real size** (e.g. `position:fixed; inset:0`, or a block with width/height),
