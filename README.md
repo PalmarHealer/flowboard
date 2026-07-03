@@ -70,10 +70,13 @@ Add a single script — the stylesheet is injected automatically:
 | **Shift + drag** on empty space | rubber-band multi-select · **Shift + click** = add/remove one |
 | **Delete / Backspace** | remove the selection |
 | **Ctrl/⌘ + Z** / **Ctrl/⌘ + Shift + Z** | undo / redo |
-| Toolbar (top-right) | undo/redo · zoom · fit · grid-snap toggle · theme |
+| Controls bar (top-left) | **Edit** toggle; in edit mode also **+ Card**, **Undo**, **Redo**, and **Save** (Save shows once something changed) |
+| Toolbar (top-right) | zoom · fit · grid-snap toggle · theme |
 | Minimap (bottom-right) | click or drag to move the viewport |
 
-Set **`readOnly: true`** to disable all editing (presentation mode).
+**By default the board opens in light theme + read-only** (a clean presentation). The built-in
+**Edit** button (top-left) switches to editing. Pass `readOnly: false` to start editable, or
+`theme: 'auto'` to follow the viewer's OS theme.
 
 ---
 
@@ -86,17 +89,18 @@ new FlowBoard(target, options)
 
 | Option | Default | Description |
 |---|---|---|
-| `theme` | `'auto'` | `'auto'` \| `'light'` \| `'dark'` |
+| `theme` | `'light'` | `'light'` \| `'dark'` \| `'auto'` (follow OS) |
 | `grid` | `true` | show the background grid |
 | `gridStyle` | `'dots'` | `'dots'` \| `'lines'` \| `'none'` |
 | `gridSize` | `26` | grid spacing in px (scales with zoom) |
 | `gridHideBelow` | `0.75` | hide the grid when zoom drops below this (`0`/`false` = never) |
 | `snap` | `0` | grid-snap step in px (0 = off; also toggled in the toolbar) |
 | `clickToEdit` | `true` | a single click on a card opens the editor |
-| `toolbar` | `true` | show the zoom/fit/snap/theme toolbar |
+| `toolbar` | `true` | show the zoom/fit/snap/theme toolbar (top-right) |
+| `controls` | `true` | show the edit/add/undo/redo/save bar (top-left) |
 | `minimap` | `true` | show the overview map |
 | `inspector` | `true` | show the style panel for the selection |
-| `readOnly` | `false` | presentation mode (no editing) |
+| `readOnly` | `true` | start in presentation mode (Edit button switches it) |
 | `connectable` | `true` | allow drawing connections from ports |
 | `minZoom` / `maxZoom` | `0.2` / `2.4` | zoom limits |
 | `defaultNodeWidth` | `280` | fallback card width |
@@ -139,7 +143,7 @@ FlowBoard.ICON(name)   // returns an inline Tabler SVG string
 ## Events
 
 `change` · `nodemove` · `nodeclick` · `select` (ids[]) · `connect` (edge) · `edgeclick` (edge) ·
-`zoom` (scale) · `theme` (`'light'|'dark'`) · `edit` (node)
+`zoom` (scale) · `theme` (`'light'|'dark'`) · `edit` (node) · `save` (json — from the built-in Save button)
 
 ```js
 board.on('connect', e => console.log('linked', e.from, '→', e.to));

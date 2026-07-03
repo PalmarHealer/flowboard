@@ -120,27 +120,32 @@ board.setEdges([{ from:'a', to:'b' }, { from:'b', to:'c' }, { from:'c', to:'d' }
 board.fit();
 ```
 
-## 3. Common setups
+## 3. Defaults & common setups
 
-Presentation (no editing, framed, light theme):
+**Defaults when you pass no options:** `theme:'light'` and `readOnly:true` — the board opens as a
+clean **light-mode presentation**. A built-in **controls bar (top-left)** shows an **Edit** button;
+clicking it switches to edit mode (and reveals + Card / Undo / Redo, plus Save once something
+changed). This is the recommended default for artifacts/handouts. Note: `theme:'auto'` follows the
+viewer's OS setting (so it can be dark) — only pass it if you want that.
+
+Presentation (the default — just):
 ```js
-const board = new FlowBoard('#app', { readOnly: true, theme: 'light' });
-board.fromJSON(savedData);
+const board = new FlowBoard('#app');
+board.fromJSON(savedData);   // or setNodes/setEdges + fit()
 ```
 
-Editable board that persists to localStorage:
+Start editable right away:
 ```js
-const board = new FlowBoard('#app', { theme: 'auto', snap: 26 });
-const saved = localStorage.getItem('board');
-if (saved) board.fromJSON(JSON.parse(saved)); else { board.setNodes(...); board.setEdges(...); board.fit(); }
+const board = new FlowBoard('#app', { readOnly: false, snap: 26 });
 board.on('change', () => localStorage.setItem('board', JSON.stringify(board.toJSON())));
 ```
 
 ## 4. Options (all optional)
 
-`theme` `'auto'|'light'|'dark'` · `grid` · `gridStyle` `'dots'|'lines'|'none'` · `gridSize` `26` ·
-`gridHideBelow` `0.75` · `snap` `0` · `clickToEdit` `true` · `toolbar` · `minimap` · `inspector` ·
-`readOnly` `false` · `connectable` `true` · `minZoom`/`maxZoom` · `defaultNodeWidth` · `fitPadding`.
+`theme` `'light'` (default; also `'auto'|'dark'`) · `grid` · `gridStyle` `'dots'|'lines'|'none'` ·
+`gridSize` `26` · `gridHideBelow` `0.75` · `snap` `0` · `clickToEdit` `true` · `toolbar` · `minimap` ·
+`inspector` · `controls` `true` (built-in top-left edit/add/undo/redo/save bar) · `readOnly` `true`
+(default) · `connectable` · `minZoom`/`maxZoom` · `defaultNodeWidth` · `fitPadding`.
 
 ## 5. API & events
 
@@ -151,14 +156,22 @@ fit · zoomBy · setZoom · centerOn · undo · redo · setSnap · toggleSnap
 setTheme · getTheme · setReadOnly · getSelection · toJSON · fromJSON · destroy
 on(event, cb) / off(event, cb)          FlowBoard.ICON(name) -> inline Tabler SVG string
 ```
-Events: `change`, `nodemove`, `nodeclick`, `select`, `connect`, `edgeclick`, `zoom`, `theme`, `edit`.
+Events: `change`, `nodemove`, `nodeclick`, `select`, `connect`, `edgeclick`, `zoom`, `theme`, `edit`,
+`save` (fires when the built-in Save button is clicked; payload = `toJSON()`).
 
 ## 6. Built-in interactions (no code needed)
 
-Users already get: pan/zoom, drag cards, **click a card to edit rich text**, drag a port to connect
-(drop on empty space to spawn a linked card), **Shift+drag** to marquee-select, an inspector to
-recolor/restyle, undo/redo (`Ctrl/⌘+Z`), a minimap, and a theme toggle. You only supply the initial
-data and (optionally) react to events.
+Users already get, with no extra UI code from you:
+- a **controls bar top-left**: **Edit** toggle (present ⇄ edit); in edit mode also **+ Card**,
+  **Undo**, **Redo**, and **Save** (Save appears only after a change; it emits a `save` event, or by
+  default downloads a standalone HTML of the board).
+- a **toolbar top-right**: zoom, fit, grid-snap, theme toggle.
+- an **inspector top-right** and a **minimap bottom-right**.
+- interactions: pan/zoom, drag cards, **click a card to edit rich text**, drag a port to connect
+  (drop on empty space to spawn a linked card), **Shift+drag** to marquee-select, `Ctrl/⌘+Z` undo.
+
+So you normally do **not** build your own edit/add/save buttons — they're built in. You only supply
+the initial data and (optionally) listen to events like `save` or `change`.
 
 ## Notes
 

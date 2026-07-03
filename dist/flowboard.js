@@ -13,6 +13,7 @@
   'use strict';
 
   var SVGNS = 'http://www.w3.org/2000/svg';
+  var CDN = 'https://cdn.jsdelivr.net/gh/PalmarHealer/flowboard@v1.0.0/dist/flowboard.auto.js';
   function el(tag, cls, parent) { var d = document.createElement(tag); if (cls) d.className = cls; if (parent) parent.appendChild(d); return d; }
   function svg(tag, parent) { var e = document.createElementNS(SVGNS, tag); if (parent) parent.appendChild(e); return e; }
   function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
@@ -23,9 +24,9 @@
     if (!host) throw new Error('FlowBoard: target not found');
 
     this.options = Object.assign({
-      theme: 'auto', grid: true, gridStyle: 'dots', gridSize: 26, gridHideBelow: 0.75,
-      snap: 0, clickToEdit: true, toolbar: true, minimap: true, inspector: true,
-      readOnly: false, connectable: true,
+      theme: 'light', grid: true, gridStyle: 'dots', gridSize: 26, gridHideBelow: 0.75,
+      snap: 0, clickToEdit: true, toolbar: true, minimap: true, inspector: true, controls: true,
+      readOnly: true, connectable: true,
       minZoom: 0.2, maxZoom: 2.4, zoomStep: 1.15, defaultNodeWidth: 280, fitPadding: 60
     }, options || {});
 
@@ -42,6 +43,7 @@
     this.setTheme(this.options.theme);
     this._bind();
     var self = this; this.on('change', function () { self._scheduleHistory(); });
+    this._updateControls();
   }
 
   FlowBoard.prototype = {
@@ -66,6 +68,7 @@
       this._marqueeEl = el('div', 'fb__marquee', this._world); this._marqueeEl.style.display = 'none';
 
       if (o.toolbar) this._buildToolbar();
+      if (o.controls !== false) this._buildControls();
       if (o.minimap) this._buildMinimap();
       this._buildRTE();
       if (o.inspector) this._inspector = el('div', 'fb__inspector', host);
@@ -74,10 +77,6 @@
     _buildToolbar: function () {
       var self = this, tb = el('div', 'fb__toolbar', this._host);
       function btn(label, title, fn) { var b = el('button', null, tb); b.type = 'button'; b.innerHTML = label; b.title = title; b.addEventListener('click', fn); return b; }
-      this._undoBtn = btn(ICON('arrow-back-up'), 'Rückgängig (Strg+Z)', function () { self.undo(); });
-      this._redoBtn = btn(ICON('arrow-forward-up'), 'Wiederholen (Strg+Umschalt+Z)', function () { self.redo(); });
-      this._updateHistButtons();
-      el('span', 'fb__sep', tb);
       btn(ICON('zoom-out'), 'Verkleinern', function () { self.zoomBy(1 / self.options.zoomStep); });
       this._zoomLabel = el('span', 'fb__zoom', tb); this._zoomLabel.textContent = '100%';
       btn(ICON('zoom-in'), 'Vergrößern', function () { self.zoomBy(self.options.zoomStep); });
@@ -108,6 +107,46 @@
       cmd(ICON('bold'), 'Fett', 'bold'); cmd(ICON('italic'), 'Kursiv', 'italic'); cmd(ICON('underline'), 'Unterstrichen', 'underline');
       cmd(ICON('list'), 'Aufzählung', 'insertUnorderedList'); cmd(ICON('list-numbers'), 'Nummerierte Liste', 'insertOrderedList');
       cmd(ICON('heading'), 'Überschrift', 'formatBlock', '<h4>'); cmd(ICON('clear-formatting'), 'Formatierung entfernen', 'removeFormat');
+    },
+
+    _buildControls: function () {
+      var self = this, bar = el('div', 'fb__controls', this._host); this._controls = bar;
+      function b(html, title, fn) { var x = el('button', null, bar); x.type = 'button'; x.innerHTML = html; x.title = title; x.addEventListener('click', fn); return x; }
+      this._editBtn = b(ICON('pencil') + '<span>Edit</span>', 'Bearbeiten', function () { self.setReadOnly(!self.options.readOnly); });
+      this._undoBtn = b(ICON('arrow-back-up'), 'Rückgängig (Strg+Z)', function () { self.undo(); });
+      this._redoBtn = b(ICON('arrow-forward-up'), 'Wiederholen (Strg+Umschalt+Z)', function () { self.redo(); });
+      this._addBtn = b(ICON('plus') + '<span>Card</span>', 'Neue Karte', function () { self._addAtCenter(); });
+      this._saveBtn = b(ICON('device-floppy') + '<span>Save</span>', 'Speichern', function () {
+        if ((self._listeners.save || []).length) self.emit('save', self.toJSON()); else self._downloadHTML();
+      });
+    },
+    _updateControls: function () {
+      if (!this._controls) return;
+      var ro = this.options.readOnly;
+      this._editBtn.innerHTML = ICON(ro ? 'pencil' : 'check') + '<span>' + (ro ? 'Edit' : 'Done') + '</span>';
+      this._editBtn.title = ro ? 'Bearbeiten' : 'Fertig (Präsentationsmodus)';
+      var show = ro ? 'none' : '';
+      if (this._addBtn) this._addBtn.style.display = show;
+      if (this._undoBtn) this._undoBtn.style.display = show;
+      if (this._redoBtn) this._redoBtn.style.display = show;
+      if (this._saveBtn) this._saveBtn.style.display = (!ro && this._histAt > 0) ? '' : 'none';
+    },
+    _addAtCenter: function () {
+      var r = this._viewport.getBoundingClientRect(), v = this._view;
+      var wx = (r.width / 2 - v.x) / v.s, wy = (r.height / 2 - v.y) / v.s;
+      var n = this.addNode({ x: wx - 100, y: wy - 40, width: 220, title: 'New card', body: '' });
+      this._clearSel(); this._select(n.id, true); return n;
+    },
+    _downloadHTML: function () {
+      var data = JSON.stringify(this.toJSON());
+      var html = '<!doctype html>\n<meta charset="utf-8">\n<title>FlowBoard</title>\n' +
+        '<div id="app" style="position:fixed;inset:0"></div>\n' +
+        '<script src="' + CDN + '"><\/script>\n' +
+        '<script>new FlowBoard("#app",{readOnly:true,theme:"' + this.getTheme() + '"}).fromJSON(' + data + ');<\/script>\n';
+      var a = document.createElement('a');
+      a.href = URL.createObjectURL(new Blob([html], { type: 'text/html' }));
+      a.download = 'flowboard.html'; document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(function () { URL.revokeObjectURL(a.href); }, 1000);
     },
 
     /* ---------- data API ---------- */
@@ -416,7 +455,7 @@
     /* ---------- theme / mode ---------- */
     setTheme: function (t) { if (t === 'auto') this._host.removeAttribute('data-theme'); else this._host.setAttribute('data-theme', t); if (this._themeBtn) this._themeBtn.innerHTML = ICON(this.getTheme() === 'dark' ? 'sun' : 'moon'); this._drawMinimap(); this.emit('theme', this.getTheme()); return this; },
     getTheme: function () { var t = this._host.getAttribute('data-theme'); return t || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'); },
-    setReadOnly: function (v) { this.options.readOnly = !!v; this._host.classList.toggle('fb--readonly', !!v); if (v) this.endEdit(); this._renderAllNodes(); this._drawEdges(); this._refreshInspector(); return this; },
+    setReadOnly: function (v) { this.options.readOnly = !!v; this._host.classList.toggle('fb--readonly', !!v); if (v) this.endEdit(); this._renderAllNodes(); this._drawEdges(); this._refreshInspector(); this._updateControls(); return this; },
     setSnap: function (px) { this.options.snap = px || 0; if (this._snapBtn) this._snapBtn.classList.toggle('is-active', !!this.options.snap); return this; },
     toggleSnap: function () { return this.setSnap(this.options.snap ? 0 : (this.options.gridSize || 26)); },
 
@@ -432,7 +471,7 @@
     _applyHistory: function (snap) { this._histSuspended = true; var data = JSON.parse(snap); this.setNodes(data.nodes); this.setEdges(data.edges); this._histSuspended = false; this._clearSel(); this._updateHistButtons(); },
     undo: function () { clearTimeout(this._histTimer); if (this._histAt <= 0) return this; this._histAt--; this._applyHistory(this._hist[this._histAt]); return this; },
     redo: function () { clearTimeout(this._histTimer); if (this._histAt >= this._hist.length - 1) return this; this._histAt++; this._applyHistory(this._hist[this._histAt]); return this; },
-    _updateHistButtons: function () { if (this._undoBtn) this._undoBtn.disabled = this._histAt <= 0; if (this._redoBtn) this._redoBtn.disabled = this._histAt >= this._hist.length - 1; },
+    _updateHistButtons: function () { if (this._undoBtn) this._undoBtn.disabled = this._histAt <= 0; if (this._redoBtn) this._redoBtn.disabled = this._histAt >= this._hist.length - 1; this._updateControls(); },
 
     /* ---------- serialization / events ---------- */
     toJSON: function () {
@@ -479,6 +518,7 @@
     'arrow-back-up': '<path d="M9 13l-4 -4l4 -4"/><path d="M5 9h11a4 4 0 0 1 0 8h-1"/>',
     'arrow-forward-up': '<path d="M15 13l4 -4l-4 -4"/><path d="M19 9h-11a4 4 0 0 0 0 8h1"/>',
     'plus': '<path d="M12 5l0 14"/><path d="M5 12l14 0"/>',
+    'check': '<path d="M5 12l5 5l10 -10"/>',
     'device-floppy': '<path d="M6 4h10l4 4v10a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2"/><path d="M12 14m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/><path d="M14 4l0 4l-6 0l0 -4"/>',
     'pencil': '<path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4"/><path d="M13.5 6.5l4 4"/>',
     'eye': '<path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0"/><path d="M21 12c-2.4 4 -5.4 6 -9 6c-3.6 0 -6.6 -2 -9 -6c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6"/>'
