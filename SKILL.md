@@ -16,21 +16,48 @@ FlowBoard renders draggable cards ("nodes") connected by arrows ("edges") on a p
 give it data; it handles interaction (drag, connect, edit, multi-select, undo/redo, theming). **Use it
 as a black box — load it and call its API. Do not reimplement or edit the library.**
 
-## 1. Load it (one script — CSS is auto-injected)
+## 1. Load it — choose by environment (this is where things go wrong; read carefully)
 
-Normal web page / GitHub Pages / server-rendered HTML:
+The whole library is one file, `flowboard.auto.js` (~58 KB), which injects its own CSS and defines
+`window.FlowBoard`. HOW you include it depends on where your HTML runs.
+
+### A. Claude Artifacts (and any sandbox with a strict CSP) — the usual case → INLINE it
+
+A Claude Artifact's CSP **blocks external scripts**. A `<script src="…cdn…">` tag will silently fail
+and your `new FlowBoard(...)` call throws **`ReferenceError: FlowBoard is not defined`** with a blank
+board. So do **not** use a `src` tag here. Instead:
+
+1. **Fetch the bundle's text** yourself (via WebFetch), trying these URLs in order until one returns JS:
+   - `https://cdn.jsdelivr.net/gh/PalmarHealer/flowboard@v1.0.0/dist/flowboard.auto.js`
+   - `https://raw.githubusercontent.com/PalmarHealer/flowboard/v1.0.0/dist/flowboard.auto.js`
+2. **Paste the returned code verbatim** inside an inline `<script> … </script>` in the artifact.
+3. Add your own `<script>` that calls `new FlowBoard(...)` after it.
+
+```html
+<div id="app" style="position:fixed; inset:0"></div>
+<script>
+  /* ⇩ paste the ENTIRE contents of flowboard.auto.js here (do not link it) ⇩ */
+</script>
+<script>
+  const board = new FlowBoard('#app', { theme: 'auto', minimap: true });
+  board.setNodes([ /* … */ ]); board.setEdges([ /* … */ ]); board.fit();
+</script>
+```
+
+### B. A normal web page you control (server, GitHub Pages, local .html file)
+
+External scripts are allowed here, so one tag is enough (CSS is auto-injected):
 
 ```html
 <div id="app" style="position:fixed; inset:0"></div>
 <script src="https://cdn.jsdelivr.net/gh/PalmarHealer/flowboard@v1.0.0/dist/flowboard.auto.js"></script>
 ```
 
-> The container **must have a real size** (e.g. `position:fixed; inset:0`, or a block with width/height).
+> The container **must have a real size** (e.g. `position:fixed; inset:0`, or a block with width/height),
+> otherwise nothing renders.
 
-**Inside a Claude Artifact (or any strict-CSP sandbox that blocks external hosts):** the `<script src>`
-above will be blocked. Instead, fetch the bundle's text and paste it inline:
-`WebFetch("https://cdn.jsdelivr.net/gh/PalmarHealer/flowboard@v1.0.0/dist/flowboard.auto.js")`, then put
-the returned code inside an inline `<script>…</script>`. Everything (CSS + JS) is in that one file.
+**Troubleshooting:** `FlowBoard is not defined` / blank board = you used a `<script src>` in a sandbox
+that blocks it. Switch to method **A** (inline the bundle).
 
 ## 2. Create a board and give it data
 
